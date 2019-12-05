@@ -76,7 +76,10 @@ handleBalance = do
         invoke #term (ShowBalance blnc)
         nextEv
     )
-    (invoke #acc CancelReq)    
+    (on @("term" :? IsRequestCancelled) $ do
+       invoke #acc CancelReq
+       invoke #term AckRequestCancellation
+    )
   label #balanceCompleted
 
 handleWithdrawal :: (_) => STransData m sp _ () -- IsActiveUser _ ()

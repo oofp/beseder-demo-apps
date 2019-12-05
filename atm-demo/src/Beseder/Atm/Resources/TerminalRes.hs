@@ -28,6 +28,7 @@ data ShowBalance = ShowBalance Funds deriving (Eq, Show)
 data ShowWithdrawInstruction = ShowWithdrawInstruction Funds deriving (Eq, Show)
 data SelectServiceAgain = SelectServiceAgain deriving (Eq, Show)
 data ShowNoticeAndQuit = ShowNoticeAndQuit Text deriving (Eq, Show)
+data AckRequestCancellation = AckRequestCancellation deriving (Eq, Show)
 
 class Monad m => Terminal m res where
   data  TerminalIdle m res 
@@ -38,6 +39,7 @@ class Monad m => Terminal m res where
   data  BalanceSelected m res
   data  WithdrawalSelected m res
   data  QuitSelected m res
+  data  RequestCancelled m res
   data  ShowingBalance m res
   data  ShowingWithdrawInstruction m res
   data  ShowingNoticeAndQuit m res
@@ -50,11 +52,12 @@ class Monad m => Terminal m res where
   showWithdrawInstruction :: RequestDef m ShowWithdrawInstruction (WithdrawalSelected m res) '[ShowingWithdrawInstruction m res]  
   selectServiceAgain :: RequestDef m SelectService (ShowingWithdrawInstruction m res) '[SelectingService m res]  
   showNoticeAndQuitW  :: RequestDef m ShowNoticeAndQuit (ShowingWithdrawInstruction m res) '[SelectingService m res]    
+  ackRequestCancellation :: RequestDef m AckRequestCancellation (RequestCancelled m res) '[SelectingService m res]    
 
   passTransition :: TransitionDef m (GettingPasscode m res) '[PasscodeProvided m res, PasscodeCancelled m res]
   selectTransition :: TransitionDef m (SelectingService m res) '[BalanceSelected m res, WithdrawalSelected m res, QuitSelected m res]
-  balanceCancelTransition :: TransitionDef m (BalanceSelected m res) '[SelectingService m res]
-  withdrawalCancelTransition :: TransitionDef m (WithdrawalSelected m res) '[SelectingService m res]
+  balanceCancelTransition :: TransitionDef m (BalanceSelected m res) '[RequestCancelled m res]
+  withdrawalCancelTransition :: TransitionDef m (WithdrawalSelected m res) '[RequestCancelled m res]
   balanceTransition :: TransitionDef m (ShowingBalance m res) '[SelectingService m res]
   showQuitTransition :: TransitionDef m (ShowingNoticeAndQuit m res) '[TerminalIdle m res]
 
@@ -67,7 +70,7 @@ class Monad m => Terminal m res where
 buildRes ''Terminal
 
 type instance StateTrans (StPasscodeProvided m res name) = 'Static
---type instance StateTrans (StBalanceSelected m res name) = 'Static
+type instance StateTrans (StRequestCancelled m res name) = 'Static
 type instance StateTrans (StShowingWithdrawInstruction m res name) = 'Static
 type instance StateTrans (StQuitSelected m res name) = 'Static
 
