@@ -44,7 +44,7 @@ class Monad m => CardReader m res where
   eatingTransition :: TransitionDef m (EatingCard m res) '[CardReaderIdle m res]
   termReader :: TermDef m (CardReaderReleased m res)
 
-  _getCardDetails :: CardInserted m res -> m CardDetails
+  _cardDetails :: CardInserted m res -> m CardDetails
   
 --  
 buildRes ''CardReader
@@ -52,6 +52,7 @@ buildRes ''CardReader
 -- manual additions
 type instance TermRequest (StCardReaderIdle m res name) = ReleaseReader
 type instance StateTrans (StCardInvalid m res name) = 'Static
+type instance StateTrans (StCardInserted m res name) = 'Static
 
-getCardDetails :: CardReader m res => StCardInserted m res name -> m CardDetails
-getCardDetails (St cardInserted) = _getCardDetails cardInserted
+cardDetails :: CardReader m res => StCardInserted m res name -> m CardDetails
+cardDetails (St cardInserted) = _cardDetails cardInserted

@@ -23,5 +23,5 @@ import           Beseder.Resources.ResourceDef
 
 newtype CardDetails = CardDetails Text deriving (Eq, Show)
 newtype PassCode = PassCode Text deriving (Eq, Show)
-newtype Funds = Funds Int
+newtype Funds = Funds Int deriving (Eq, Show)
 

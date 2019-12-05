@@ -20,8 +20,9 @@ import           Haskus.Utils.Variant
 import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
+import           Beseder.Atm.Resources.Types.Domain
 
-data DispenseCash   = DispenseCash deriving (Eq, Show)
+data DispenseCash   = DispenseCash Funds deriving (Eq, Show)
 data RollbackCash   = RollbackCash deriving (Eq, Show)
 data AckCollected   = AckCollected deriving (Eq, Show)
 data AckRolledBack  = AckRolledBack deriving (Eq, Show)
@@ -38,10 +39,11 @@ class Monad m => CashDispenser m res where
 
   newCashDispenser :: MkResDef m (ResPar m res) (DispenserIdle m res)
   dispense :: RequestDef m DispenseCash (DispenserIdle m res) '[Dispensing m res]  
-  rollback :: RequestDef m RollbackCash (Dispensing m res) '[RolledBack m res, CashCollected m res]  
+  rollback :: RequestDef m RollbackCash (Dispensing m res) '[RollingBack m res]  
   ackRoolback :: RequestDef m AckRolledBack (RolledBack m res) '[DispenserIdle m res]  
-  ackCollected :: RequestDef m AckCollected (RolledBack m res) '[DispenserIdle m res]  
+  ackCollected :: RequestDef m AckCollected (CashCollected m res) '[DispenserIdle m res]  
   dispensingTransition :: TransitionDef m (Dispensing m res) '[CashCollected m res]
+  rollbackTransition :: TransitionDef m (RollingBack m res) '[RolledBack m res, CashCollected m res]  
   termDispenser :: TermDef m (DispenserIdle m res)
 
 --  
