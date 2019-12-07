@@ -29,7 +29,8 @@ data Logout = Logout deriving (Eq, Show)
 data ReserveFunds = ReserveFunds Funds deriving (Eq, Show) 
 data ConfirmWithdrawal = ConfirmWithdrawal deriving (Eq, Show) 
 data RollbackWithdrawal = RollbackWithdrawal deriving (Eq, Show) 
-data AckFailure = AckFailure deriving (Eq, Show)
+data AckAuthFailure = AckAuthFailure deriving (Eq, Show)
+data AckReserveFailure = AckReserveFailure deriving (Eq, Show)
 data CancelReq = CancelReq deriving (Eq, Show)
 
 data QueryBalance = QueryBalance deriving (Eq, Show)
@@ -53,9 +54,9 @@ class Monad m => Account m res where
   authenticate :: RequestDef m Authenticate (SessionIdle m res) '[Authenticating m res]  
   cancelAuthentication :: RequestDef m CancelReq (Authenticating m res) '[SessionIdle m res]  
   cancelReserving :: RequestDef m CancelReq (ReservedingFunds m res) '[UserAuthenticated m res]  
-  ackAuthFailure :: RequestDef m AckFailure (AuthenticationFailed m res) '[SessionIdle m res]  
+  ackAuthFailure :: RequestDef m AckAuthFailure (AuthenticationFailed m res) '[SessionIdle m res]  
   reserveFunds :: RequestDef m ReserveFunds (UserAuthenticated m res) '[ReservedingFunds m res]  
-  ackReservFailure :: RequestDef m AckFailure (FundsReservationFailed m res) '[UserAuthenticated m res]  
+  ackReserveFailure :: RequestDef m AckReserveFailure (FundsReservationFailed m res) '[UserAuthenticated m res]  
   confirmWithdrawal :: RequestDef m ConfirmWithdrawal (FundsReserved m res) '[UserAuthenticated m res]  
   rollbackWithdrawal :: RequestDef m RollbackWithdrawal (FundsReserved m res) '[UserAuthenticated m res]  
   queryBalance :: RequestDef m QueryBalance (UserAuthenticated m res) '[QueringBalance m res]  
@@ -85,5 +86,6 @@ type IsUserLoggedIn name
   ( name :? IsAuthenticating 
   :|| name :? IsAccountBlocked 
   :|| name :? IsAuthenticationFailed
+  :|| name :? IsSessionIdle
   ) 
 

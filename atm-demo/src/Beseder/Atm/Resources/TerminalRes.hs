@@ -28,6 +28,10 @@ data ShowBalance = ShowBalance Funds deriving (Eq, Show)
 data ShowWithdrawInstruction = ShowWithdrawInstruction Funds deriving (Eq, Show)
 data SelectServiceAgain = SelectServiceAgain deriving (Eq, Show)
 data ShowNoticeAndQuit = ShowNoticeAndQuit Text deriving (Eq, Show)
+data ShowNoticeAndSelect = ShowNoticeAndSelect Text deriving (Eq, Show)
+data ShowNoticeEjectingCard = ShowNoticeEjectingCard deriving (Eq, Show)
+data ShowNoticeWrongPasscode = ShowNoticeWrongPasscode deriving (Eq, Show)
+
 data AckRequestCancellation = AckRequestCancellation deriving (Eq, Show)
 
 class Monad m => Terminal m res where
@@ -43,6 +47,9 @@ class Monad m => Terminal m res where
   data  ShowingBalance m res
   data  ShowingWithdrawInstruction m res
   data  ShowingNoticeAndQuit m res
+  data  ShowingNoticeAndSelect m res
+  data  ShowingNoticeEjectingCard m res
+  data  ShowingNoticeWrongPasscode m res
   data  ResPar m res 
 
   newTerminal :: MkResDef m (ResPar m res) (TerminalIdle m res)
@@ -51,7 +58,10 @@ class Monad m => Terminal m res where
   showBalance :: RequestDef m ShowBalance (BalanceSelected m res) '[ShowingBalance m res]  
   showWithdrawInstruction :: RequestDef m ShowWithdrawInstruction (WithdrawalSelected m res) '[ShowingWithdrawInstruction m res]  
   selectServiceAgain :: RequestDef m SelectService (ShowingWithdrawInstruction m res) '[SelectingService m res]  
-  showNoticeAndQuitW  :: RequestDef m ShowNoticeAndQuit (ShowingWithdrawInstruction m res) '[SelectingService m res]    
+  showNoticeAndQuitW  :: RequestDef m ShowNoticeAndQuit (ShowingWithdrawInstruction m res) '[ShowingNoticeAndQuit m res]    
+  showNoticeAndSelect  :: RequestDef m ShowNoticeAndSelect (WithdrawalSelected m res) '[ShowingNoticeAndSelect m res]    
+  showNoticeEjecting  :: RequestDef m ShowNoticeEjectingCard (QuitSelected m res) '[ShowingNoticeEjectingCard m res]    
+  showNoticeWrongPasscode  :: RequestDef m ShowNoticeWrongPasscode (PasscodeProvided m res) '[ShowingNoticeWrongPasscode m res]    
   ackRequestCancellation :: RequestDef m AckRequestCancellation (RequestCancelled m res) '[SelectingService m res]    
 
   passTransition :: TransitionDef m (GettingPasscode m res) '[PasscodeProvided m res, PasscodeCancelled m res]
@@ -59,7 +69,9 @@ class Monad m => Terminal m res where
   balanceCancelTransition :: TransitionDef m (BalanceSelected m res) '[RequestCancelled m res]
   withdrawalCancelTransition :: TransitionDef m (WithdrawalSelected m res) '[RequestCancelled m res]
   balanceTransition :: TransitionDef m (ShowingBalance m res) '[SelectingService m res]
+  showNoticeAndSelectTransition :: TransitionDef m (ShowingNoticeAndSelect m res) '[SelectingService m res]
   showQuitTransition :: TransitionDef m (ShowingNoticeAndQuit m res) '[TerminalIdle m res]
+  showWrongPasscodeTransition :: TransitionDef m (ShowingNoticeWrongPasscode m res) '[GettingPasscode m res]
 
   termSession :: TermDef m (TerminalIdle m res)
 
@@ -70,8 +82,10 @@ class Monad m => Terminal m res where
 buildRes ''Terminal
 
 type instance StateTrans (StPasscodeProvided m res name) = 'Static
+type instance StateTrans (StPasscodeCancelled m res name) = 'Static
 type instance StateTrans (StRequestCancelled m res name) = 'Static
 type instance StateTrans (StShowingWithdrawInstruction m res name) = 'Static
+type instance StateTrans (StShowingNoticeEjectingCard m res name) = 'Static
 type instance StateTrans (StQuitSelected m res name) = 'Static
 
 passcode :: (Terminal m res) => StPasscodeProvided m res name -> m PassCode
