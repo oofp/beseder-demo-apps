@@ -23,7 +23,9 @@ import           Beseder.Atm.Resources.Types.Domain
 
 data EjectCard = EjectCard deriving (Eq, Show)
 data EatCard = EatCard deriving (Eq, Show)
+data AckInvalidCard = AckInvalidCard deriving (Eq, Show)
 data ReleaseReader = ReleaseReader deriving (Eq, Show)
+data EnableCardReader = EnableCardReader deriving (Eq, Show)
 
 class Monad m => CardReader m res where
   data  CardReaderIdle m res 
@@ -35,13 +37,15 @@ class Monad m => CardReader m res where
   data  ResPar m res 
 
   newCardReader :: MkResDef m (ResPar m res) (CardReaderIdle m res)
+  enableCardReader :: RequestDef m EnableCardReader (CardReaderReleased m res) '[CardReaderIdle m res]  
   ejectCard :: RequestDef m EjectCard (CardInserted m res) '[EjectingCard m res]  
   ejectInvalidCard :: RequestDef m EjectCard (CardInvalid m res) '[EjectingCard m res]  
   eatCard :: RequestDef m EatCard (CardInserted m res) '[EatingCard m res]  
+  ackInvalidCard :: RequestDef m AckInvalidCard (CardInvalid m res) '[EjectingCard m res]  
   releaseReader :: RequestDef m ReleaseReader (CardReaderIdle m res) '[CardReaderReleased m res]  
   cardDetectedTransition :: TransitionDef m (CardReaderIdle m res) '[CardInserted m res, CardInvalid m res]
-  ejectingTransition :: TransitionDef m (EjectingCard m res) '[CardReaderIdle m res]
-  eatingTransition :: TransitionDef m (EatingCard m res) '[CardReaderIdle m res]
+  ejectingTransition :: TransitionDef m (EjectingCard m res) '[CardReaderReleased m res]
+  eatingTransition :: TransitionDef m (EatingCard m res) '[CardReaderReleased m res]
   termReader :: TermDef m (CardReaderReleased m res)
 
   _cardDetails :: CardInserted m res -> m CardDetails

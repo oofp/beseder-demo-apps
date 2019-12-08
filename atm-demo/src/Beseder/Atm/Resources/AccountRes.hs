@@ -32,7 +32,7 @@ data RollbackWithdrawal = RollbackWithdrawal deriving (Eq, Show)
 data AckAuthFailure = AckAuthFailure deriving (Eq, Show)
 data AckReserveFailure = AckReserveFailure deriving (Eq, Show)
 data CancelReq = CancelReq deriving (Eq, Show)
-
+data AckAccountBlocked = AckAccountBlocked deriving (Eq, Show)
 data QueryBalance = QueryBalance deriving (Eq, Show)
 data AckBalance = AckBalance deriving (Eq, Show) 
 
@@ -47,7 +47,6 @@ class Monad m => Account m res where
   data  FundsReservationFailed m res 
   data  QueringBalance m res 
   data  BalanceAvailable m res 
-
   data  ResPar m res 
 
   newUserSession :: MkResDef m (ResPar m res) (SessionIdle m res)
@@ -63,6 +62,8 @@ class Monad m => Account m res where
   cancelBalanceQuery :: RequestDef m CancelReq (QueringBalance m res) '[UserAuthenticated m res]  
   ackBalance :: RequestDef m AckBalance (BalanceAvailable m res) '[UserAuthenticated m res]  
   logout :: RequestDef m Logout (UserAuthenticated m res) '[SessionIdle m res]  
+  ackAccountBlocked :: RequestDef m AckAccountBlocked (AccountBlocked m res) '[SessionIdle m res]  
+
 
   authTransition :: TransitionDef m (Authenticating m res) '[UserAuthenticated m res, AuthenticationFailed m res, AccountBlocked m res]
   reserveTransition :: TransitionDef m (ReservedingFunds m res) '[FundsReserved m res, FundsReservationFailed m res]
