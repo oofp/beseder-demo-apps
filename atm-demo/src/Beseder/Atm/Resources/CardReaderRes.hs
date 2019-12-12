@@ -39,7 +39,6 @@ class Monad m => CardReader m res where
   newCardReader :: MkResDef m (ResPar m res) (CardReaderIdle m res)
   enableCardReader :: RequestDef m EnableCardReader (CardReaderReleased m res) '[CardReaderIdle m res]  
   ejectCard :: RequestDef m EjectCard (CardInserted m res) '[EjectingCard m res]  
-  ejectInvalidCard :: RequestDef m EjectCard (CardInvalid m res) '[EjectingCard m res]  
   eatCard :: RequestDef m EatCard (CardInserted m res) '[EatingCard m res]  
   ackInvalidCard :: RequestDef m AckInvalidCard (CardInvalid m res) '[EjectingCard m res]  
   releaseReader :: RequestDef m ReleaseReader (CardReaderIdle m res) '[CardReaderReleased m res]  
@@ -55,8 +54,6 @@ buildRes ''CardReader
 
 -- manual additions
 type instance TermRequest (StCardReaderIdle m res name) = ReleaseReader
-type instance StateTrans (StCardInvalid m res name) = 'Static
-type instance StateTrans (StCardInserted m res name) = 'Static
 
 cardDetails :: CardReader m res => StCardInserted m res name -> m CardDetails
 cardDetails (St cardInserted) = _cardDetails cardInserted

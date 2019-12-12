@@ -42,7 +42,7 @@ class Monad m => Account m res where
   data  UserAuthenticated m res 
   data  AccountBlocked m res 
   data  AuthenticationFailed m res 
-  data  ReservedingFunds m res 
+  data  ReservingFunds m res 
   data  FundsReserved m res 
   data  FundsReservationFailed m res 
   data  QueringBalance m res 
@@ -52,9 +52,9 @@ class Monad m => Account m res where
   newUserSession :: MkResDef m (ResPar m res) (SessionIdle m res)
   authenticate :: RequestDef m Authenticate (SessionIdle m res) '[Authenticating m res]  
   cancelAuthentication :: RequestDef m CancelReq (Authenticating m res) '[SessionIdle m res]  
-  cancelReserving :: RequestDef m CancelReq (ReservedingFunds m res) '[UserAuthenticated m res]  
+  cancelReserving :: RequestDef m CancelReq (ReservingFunds m res) '[UserAuthenticated m res]  
   ackAuthFailure :: RequestDef m AckAuthFailure (AuthenticationFailed m res) '[SessionIdle m res]  
-  reserveFunds :: RequestDef m ReserveFunds (UserAuthenticated m res) '[ReservedingFunds m res]  
+  reserveFunds :: RequestDef m ReserveFunds (UserAuthenticated m res) '[ReservingFunds m res]  
   ackReserveFailure :: RequestDef m AckReserveFailure (FundsReservationFailed m res) '[UserAuthenticated m res]  
   confirmWithdrawal :: RequestDef m ConfirmWithdrawal (FundsReserved m res) '[UserAuthenticated m res]  
   rollbackWithdrawal :: RequestDef m RollbackWithdrawal (FundsReserved m res) '[UserAuthenticated m res]  
@@ -66,7 +66,7 @@ class Monad m => Account m res where
 
 
   authTransition :: TransitionDef m (Authenticating m res) '[UserAuthenticated m res, AuthenticationFailed m res, AccountBlocked m res]
-  reserveTransition :: TransitionDef m (ReservedingFunds m res) '[FundsReserved m res, FundsReservationFailed m res]
+  reserveTransition :: TransitionDef m (ReservingFunds m res) '[FundsReserved m res, FundsReservationFailed m res]
   balanceTransition :: TransitionDef m (QueringBalance m res) '[BalanceAvailable m res]
   termSession :: TermDef m (SessionIdle m res)
 
@@ -78,9 +78,6 @@ buildRes ''Account
 
 accountBalance :: (Account m res) => StBalanceAvailable m res name -> m Funds
 accountBalance (St st) = _accountBalance st
-
-type instance StateTrans (StUserAuthenticated m res name) = 'Static 
-type instance StateTrans (StFundsReserved m res name) = 'Static 
 
 type IsUserLoggedIn name 
   = Not 

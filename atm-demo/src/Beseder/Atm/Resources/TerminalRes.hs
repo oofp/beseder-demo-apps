@@ -90,12 +90,6 @@ class Monad m => Terminal m res where
 --  
 buildRes ''Terminal
 
-type instance StateTrans (StPasscodeProvided m res name) = 'Static
-type instance StateTrans (StPasscodeCancelled m res name) = 'Static
-type instance StateTrans (StRequestCancelled m res name) = 'Static
-type instance StateTrans (StShowingWithdrawInstruction m res name) = 'Static
-type instance StateTrans (StQuitSelected m res name) = 'Static
-
 passcode :: (Terminal m res) => StPasscodeProvided m res name -> m PassCode
 passcode (St st) = _passcode st
 
