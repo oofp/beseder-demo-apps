@@ -42,6 +42,9 @@ type IdleState m resDsp resCard resTerm =
 dispenseTimeout :: Int
 dispenseTimeout = 30
 
+--atmAppData :: forall m accRes termRes cardRes. 
+--  ( Account m accRes, Terminal m termRes, CardReader m cardRes, _
+--  ) => Beseder.Atm.Resources.AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
 atmAppData :: (_) => Beseder.Atm.Resources.AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
 atmAppData accResPar = do
   nextEv -- wait for card inserted (the only possible event)
@@ -53,6 +56,7 @@ atmAppData accResPar = do
       handleLoggedInUser
   handleCleanup    
   label #finishing  
+-- :t getLabel' #finishing (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
 handleAuthentication :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleAuthentication = do 
@@ -79,17 +83,6 @@ handleLoggedInUser = do
   forever $ do
     label #selectLoopStart  
     nextEv
-    {-
-    onOrElse @("term" :? IsBalanceSelected)
-      handleBalance
-      ( onOrElse @("term" :? IsWithdrawalSelected) 
-          handleWithdrawal
-          ( do -- add condition for clarity
-              invoke #term (ShowNoticeEjectingCard)
-              invoke #card EjectCard
-          )
-      )
-    -}
     caseOf $ do
       on @("term" :? IsBalanceSelected) handleBalance
       on @("term" :? IsWithdrawalSelected) handleWithdrawal
@@ -103,10 +96,9 @@ type IsActiveUser = NoSplitter :&& "card" :? IsCardInserted :&& (IsUserLoggedIn 
 
 handleBalance :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleBalance = do
-  -- label #balanceEntered
+  label #balanceEntered
   invoke #acc QueryBalance 
   nextEv
-  --label #balanceNext
   caseOf $ do
     on @("acc" :? IsBalanceAvailable) $ do -- not cancelled 
       blnc <- opRes #acc accountBalance
@@ -168,6 +160,7 @@ handleCancelReq = do
 
 handleCleanup :: (_) => STransData m sp _ ()      
 handleCleanup = do
+  label #enteredCleanup  
   on @("acc" :? IsUserAuthenticated) $ do
     invoke #acc Logout
   on @("term" :? IsPasscodeCancelled :&& "card" :? IsCardInserted) $ do
@@ -186,14 +179,22 @@ handleCleanup = do
     clear #acc
   invoke #card EnableCardReader  
 
+--evalData :: (_) => forall resDsp resCard resTerm. Proxy _
+--evalData = evalSTransDataLabels' (atmAppData undefined) (Proxy @(IdleState TaskQ resDsp resCard resTerm))
+
+-- evalAtmAppData :: (_) => (STransData m sp f a -> Proxy xs -> Proxy ys) -> Proxy ys
+--evalAtmAppData evalFunc = evalFunc (atmAppData undefined) (Proxy @(IdleState IO () () ())) 
+
 -- :t evalSTransData' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
 -- :t evalSTransDataApp' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
 -- :t evalSTransDataLabels' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
--- :t evalSTransDataNamedLabels' #balanceEntered (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t evalSTransDataNamedLabels' #handleCleanup (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t getLabel' #handleCleanup (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+
 
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) _ _ _ ()  
-intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) (IdleState TaskQ resDsp resCard resTerm) _ _ ()  
-intr = interpret  (atmAppData undefined)  --  undefined --
+--intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) (IdleState TaskQ resDsp resCard resTerm) _ _ ()  
+--intr = interpret  (atmAppData undefined)  --  undefined --
