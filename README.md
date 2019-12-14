@@ -20,7 +20,8 @@ Currently there are two alternative implementations of the program:
 The demo are using Beseder feature of deriving resource declaration from type class that describe resource behavior. As a bonus, it also creates state diagram that provides visual presentation of resource behavior.
 
 Here are state diagram for CashDispenser and Terminal resources:
-![Cash Dispenser Resource](https://user-images.githubusercontent.com/25211514/70852603-5be39280-1e71-11ea-88e5-e4f6e403299d.png)
 
+
+![Cash Dispenser Resource](https://user-images.githubusercontent.com/25211514/70852603-5be39280-1e71-11ea-88e5-e4f6e403299d.png)
 ![ATM Terminal Resource](https://user-images.githubusercontent.com/25211514/70852346-67818a00-1e6e-11ea-854d-ecbd5201939b.png)
 
