@@ -30,4 +30,4 @@ The demo are using Beseder feature of deriving resource declaration from type cl
 
 ### And here is entire state diagram (probably a bit to detailed) extracted from ![AtmApp.hs](https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmApp.hs)
 
-![ATM State Diagram](https://user-images.githubusercontent.com/25211514/71336512-74107d00-2515-11ea-84c4-62d249a20784.png)
+![ATM State Diagram](https://user-images.githubusercontent.com/25211514/71394032-776f3b80-25dd-11ea-8d84-98de2fd4555e.png)
