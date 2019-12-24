@@ -51,11 +51,11 @@ atmAppData accResPar = do
   try @("card" :? IsCardInserted) $ do
     newRes #acc accResPar
     handleAuthentication
-    label #authCompleted
+    -- label #authCompleted
     try @(IsUserLoggedIn "acc") $ do 
       handleLoggedInUser
   handleCleanup    
-  label #finishing  
+  -- label #finishing  
 -- :t getLabel' #finishing (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
 handleAuthentication :: (_) => STransData m sp _ () --IsActiveUser _ ()
@@ -74,14 +74,14 @@ handleAuthentication = do
       invoke #term ShowNoticeWrongPasscode
       invoke #acc AckAuthFailure
       nextEv -- term: ShowingNoticeWrongPasscode -> GettingPasscode
-      label #handleAuthentication
+      -- label #handleAuthentication
 
 handleLoggedInUser :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleLoggedInUser = do
   invoke #term SelectService
-  label #selectingService
+  -- label #selectingService
   forever $ do
-    label #selectLoopStart  
+    -- label #selectLoopStart  
     nextEv
     caseOf $ do
       on @("term" :? IsBalanceSelected) handleBalance
@@ -90,67 +90,68 @@ handleLoggedInUser = do
         invoke #term (ShowNoticeEjectingCard)
         invoke #card EjectCard
       endCase  
-    label #selectLoopCompleted  
+    -- label #selectLoopCompleted  
   
 type IsActiveUser = NoSplitter :&& "card" :? IsCardInserted :&& (IsUserLoggedIn "acc") 
 
 handleBalance :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleBalance = do
-  label #balanceEntered
+  -- label #balanceEntered
   invoke #acc QueryBalance 
   nextEv
   caseOf $ do
     on @("acc" :? IsBalanceAvailable) $ do -- not cancelled 
       blnc <- opRes #acc accountBalance
-      invoke #acc AckBalance
       invoke #term (ShowBalance blnc)
+      invoke #acc AckBalance
       nextEv
     on @("term" :? IsRequestCancelled) 
       handleCancelReq 
     endCase
-  label #balanceCompleted
+  -- label #balanceCompleted
 
 handleWithdrawal :: (_) => STransData m sp _ () -- IsActiveUser _ ()
 handleWithdrawal = do
-  label #withdrawalEntered
+  -- label #withdrawalEntered
   amnt <- opRes #term withdrawalAmount
   invoke #acc (ReserveFunds amnt)
-  label #withdrawal
+  -- label #withdrawal
   nextEv
-  label #withdrawalNext
+  -- label #withdrawalNext
   caseOf $ do
     on @("acc" :? IsFundsReserved) $ do
-      invoke #term (ShowWithdrawInstruction amnt)
-      invoke #dsp (DispenseCash amnt)
-      newRes #dispTimer TimerRes
-      invoke #dispTimer (StartTimer dispenseTimeout)
+      block $ do
+        invoke #term (ShowWithdrawInstruction amnt)
+        invoke #dsp (DispenseCash amnt)
+        newRes #dispTimer TimerRes
+        invoke #dispTimer (StartTimer dispenseTimeout)
       nextEv
       on @("dispTimer" :? IsTimerTriggered) $ do
         invoke #dsp RollbackCash
         nextEv
-        -- label #dispensingRollback
+        -- -- label #dispensingRollback
       clear #dispTimer  
       caseOf $ do
-        on @("dsp" :? IsCashCollected) $ do 
+        on @("dsp" :? IsCashCollected) $ block $ do 
           invoke #dsp AckCollected
           invoke #acc ConfirmWithdrawal
           invoke #term SelectService
-          label #dispensingCollected
-        on @("dsp" :? IsRolledBack) $ do  
+          -- label #dispensingCollected
+        on @("dsp" :? IsRolledBack) $ block $ do  
           invoke #dsp AckRolledBack
           invoke #acc RollbackWithdrawal
           invoke #term (ShowNoticeAndQuit "Withdrawal timeout. Keeping your card")
           invoke #card EatCard 
-          label #dispensingTimeout -- will be empty as we have condition on CardInserted
+          -- label #dispensingTimeout -- will be empty as we have condition on CardInserted
         endCase  
     on @("term" :? IsRequestCancelled) $ do
       handleCancelReq
-      label #withdrawCancelled
+      -- label #withdrawCancelled
     on @("acc" :? IsFundsReservationFailed) $ do
       invoke #acc AckReserveFailure
       invoke #term (ShowNoticeAndSelect "Cannot withdraw this amount")
       nextEv
-      label #fundsReservationFailed
+      -- label #fundsReservationFailed
     endCase  
 
 handleCancelReq :: (_) => STransData m sp _ ()    
@@ -160,7 +161,7 @@ handleCancelReq = do
 
 handleCleanup :: (_) => STransData m sp _ ()      
 handleCleanup = do
-  label #enteredCleanup  
+  -- label #enteredCleanup  
   on @("acc" :? IsUserAuthenticated) $ do
     invoke #acc Logout
   on @("term" :? IsPasscodeCancelled :&& "card" :? IsCardInserted) $ do
@@ -173,10 +174,12 @@ handleCleanup = do
   on @("card" :? IsCardInvalid) $ do
     invoke #card AckInvalidCard
     invoke #term ShowInvalidCardNotice 
-  label #handleCleanup  
+  -- label #handleCleanup  
   pumpEvents 
   on @("acc" :? IsSessionIdle) $ do
     clear #acc
+  invoke #term ReleaseTerminal
+  pumpEvents
   invoke #card EnableCardReader  
 
 --evalData :: (_) => forall resDsp resCard resTerm. Proxy _
@@ -194,7 +197,9 @@ handleCleanup = do
 -- :t evalSTransDataNamedLabels' #handleCleanup (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 -- :t getLabel' #handleCleanup (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
-
+-- :t getSTransDiagramSymbol' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t getSTransDiagramStates' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) _ _ _ ()  
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) (IdleState TaskQ resDsp resCard resTerm) _ _ ()  
 --intr = interpret  (atmAppData undefined)  --  undefined --
+

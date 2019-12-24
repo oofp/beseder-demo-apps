@@ -128,6 +128,8 @@ atmAppLoopData = do
                 invoke #acc RollbackWithdrawal
                 invoke #term (ShowNoticeAndQuit "Withdrawal timeout. Keeping your card")
                 invoke #card EatCard
+                invoke #acc Logout
+                -- TODO: add logout
               on @("dsp" :? IsRollingBack :&& "acc" :? IsFundsReserved) $ do
                 label #rollingBack
               defCase $ label #defCaseLoggedIn    -- empty
@@ -135,14 +137,35 @@ atmAppLoopData = do
       on @("card" :? IsEjectingCard) $ do
         label #ejectingCard  
       on @("card" :? IsEatingCard) $ do
-          label #eatingCard  
-      on @("card" :? IsCardReaderReleased :&& "term" :? IsTerminalIdle :&& "dsp" :? IsDispenserIdle) $ do
-        invoke #card EnableCardReader  
+        label #eatingCard  
+      on @("card" :? IsCardReaderReleased :&& "dsp" :? IsDispenserIdle) $ do
+        caseOf $ do
+          on @("term" :? IsReleasingTerminal) $
+            label #releasingTerminal
+          on @(Not ("term" :? IsTerminalIdle)) $ do --why it does not work??
+          --on @("term" :? IsShowingInvalidCardNotice :|| "term" :? IsShowingNoticeAndQuit :|| "term" :? IsShowingNoticeEjectingCard :|| "term" :? IsShowingAccountBlockedNotice) $ do 
+            invoke #term ReleaseTerminal
+          defCase $ do    
+            label #enableCardReader
+            invoke #card EnableCardReader
       defCase $ label #defCase  
   label #exit
-
+                                  {-
+*** CorePrep [Beseder.Atm.AtmLoopApp]:
+Result size of CorePrep
+  = {terms: 19,038,
+     types: 11,757,936,
+     coercions: 783,976,960,
+     joins: 0/4,827}
+..
+(36283.64 secs,)     
+-}  
 -- :t evalSTransDataNamedLabels' #defCaseInserted atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t getLabel' #allStates atmAppLoopData (Proxy @(IdleState IO () () () () ()))
+-- :t getSTransDiagramSymbol' atmAppLoopData   (Proxy @(IdleState IO () () () () ()))
+-- :t getSTransDiagramStates' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
+-- :t evalSTransDataNamedLabels' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
+-- :t getLabel' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 
-intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
-intr = interpret atmAppLoopData   --  undefined --
+-- intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
+-- intr = interpret atmAppLoopData   --  undefined --
