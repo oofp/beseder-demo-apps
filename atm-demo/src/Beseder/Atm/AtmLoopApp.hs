@@ -166,6 +166,6 @@ Result size of CorePrep
 -- :t getSTransDiagramStates' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t evalSTransDataNamedLabels' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t getLabel' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
-
+-- :t validateSTransData' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
 -- intr = interpret atmAppLoopData   --  undefined --

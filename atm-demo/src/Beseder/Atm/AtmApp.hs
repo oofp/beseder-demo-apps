@@ -178,6 +178,7 @@ handleCleanup = do
   pumpEvents 
   on @("acc" :? IsSessionIdle) $ do
     clear #acc
+  -- label #aboutToReleaseTerminal  
   invoke #term ReleaseTerminal
   pumpEvents
   invoke #card EnableCardReader  
@@ -199,6 +200,10 @@ handleCleanup = do
 
 -- :t getSTransDiagramSymbol' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 -- :t getSTransDiagramStates' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+
+-- :t getLabel' #finishing (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t validateSTransData' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) _ _ _ ()  
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) (IdleState TaskQ resDsp resCard resTerm) _ _ ()  
 --intr = interpret  (atmAppData undefined)  --  undefined --
