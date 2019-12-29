@@ -54,12 +54,14 @@ atmAppLoopData = do
         invoke #card AckInvalidCard
         invoke #term ShowInvalidCardNotice 
       on @("card" :? IsCardInserted) $ do
+        label #cardInserted
         caseOf $ do 
           on @("term" :? IsTerminalIdle) $ do
             invoke #term GetPasscode
           on @("term" :? IsGettingPasscode) $ do -- continue
             label #gettingPasscode
           on @("term" :? IsPasscodeCancelled) $ do 
+            label #passCanceled
             invoke #term ShowNoticeEjectingCard 
             invoke #card EjectCard
           on @("term" :? IsPasscodeProvided :&& "acc" :? IsSessionIdle) $ do
@@ -167,5 +169,8 @@ Result size of CorePrep
 -- :t evalSTransDataNamedLabels' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t getLabel' #defCase atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t validateSTransData' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
+-- :t getError' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
+-- :t validateSteps' atmAppLoopData  (Proxy @'["enableCardReader","releasingTerminal"]) (Proxy @(IdleState IO () () () () ()))
+
 -- intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
 -- intr = interpret atmAppLoopData   --  undefined --

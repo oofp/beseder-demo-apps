@@ -56,7 +56,6 @@ atmAppData accResPar = do
       handleLoggedInUser
   handleCleanup    
   -- label #finishing  
--- :t getLabel' #finishing (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 
 handleAuthentication :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleAuthentication = do 
@@ -178,7 +177,7 @@ handleCleanup = do
   pumpEvents 
   on @("acc" :? IsSessionIdle) $ do
     clear #acc
-  -- label #aboutToReleaseTerminal  
+  --label #aboutToReleaseTerminal  
   invoke #term ReleaseTerminal
   pumpEvents
   invoke #card EnableCardReader  
@@ -203,6 +202,8 @@ handleCleanup = do
 
 -- :t getLabel' #finishing (atmAppData undefined) (Proxy @(IdleState IO () () ()))
 -- :t validateSTransData' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t getError' (atmAppData undefined) (Proxy @(IdleState IO () () ()))
+-- :t validateSteps' (atmAppData undefined) (Proxy @'["aboutToReleaseTerminal"]) (Proxy @(IdleState IO () () ()))
 
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) _ _ _ ()  
 --intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm) (IdleState TaskQ resDsp resCard resTerm) _ _ ()  
