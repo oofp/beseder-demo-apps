@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeApplications       #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeOperators          #-}
+{-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE UndecidableInstances   #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedLabels #-}
@@ -33,6 +34,7 @@ import           Beseder.Atm.Resources.AccountRes
 import           Beseder.Atm.Resources.CardReaderRes
 import           Beseder.Atm.Resources.TerminalRes
 import           Beseder.Resources.Timer
+import           GHC.Exts (Any)    
 
 type IdleState m resDsp resCard resTerm = 
   '[( StDispenserIdle m resDsp "dsp", 
@@ -173,15 +175,23 @@ handleCleanup = do
   on @("card" :? IsCardInvalid) $ do
     invoke #card AckInvalidCard
     invoke #term ShowInvalidCardNotice 
-  -- label #handleCleanup  
+    label #handleCleanup  
   pumpEvents 
   on @("acc" :? IsSessionIdle) $ do
     clear #acc
-  --label #aboutToReleaseTerminal  
+  label #aboutToReleaseTerminal  
   invoke #term ReleaseTerminal
   pumpEvents
   invoke #card EnableCardReader  
 
+atmAppDataS = atmAppData undefined
+mkSTransDataType "atmAppDataS" "ATMFunc"   
+mkSTransDataTypeAny "atmAppDataS" "ATMFuncAny"   
+type ATMFuncResAny = Eval (ATMFuncAny NoSplitter (IdleState IO () () ()))
+-- :kind!  ValidateSteps ' [] ATMFuncAny NoSplitter (IdleState IO () () ())
+-- :kind!  ValidateSteps ' ["aboutToReleaseTerminal", "handleCleanup"] ATMFuncAny NoSplitter (IdleState IO () () ())
+--
+  
 --evalData :: (_) => forall resDsp resCard resTerm. Proxy _
 --evalData = evalSTransDataLabels' (atmAppData undefined) (Proxy @(IdleState TaskQ resDsp resCard resTerm))
 

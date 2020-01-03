@@ -12,7 +12,8 @@
 {-# LANGUAGE TypeOperators          #-}
 {-# LANGUAGE UndecidableInstances   #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedLabels       #-}
+{-# LANGUAGE TemplateHaskell        #-}
 
 {-# OPTIONS_GHC -fomit-interface-pragmas #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
@@ -33,6 +34,7 @@ import           Beseder.Atm.Resources.AccountRes
 import           Beseder.Atm.Resources.CardReaderRes
 import           Beseder.Atm.Resources.TerminalRes
 import           Beseder.Resources.Timer
+import           GHC.Exts (Any)    
 --import           Beseder.Resources.Timer.PaceRes
 
 type IdleState m resDsp resCard resTerm resPace resAcc = 
@@ -152,7 +154,10 @@ atmAppLoopData = do
             invoke #card EnableCardReader
       defCase $ label #defCase  
   label #exit
-                                  {-
+
+mkSTransDataTypeAny "atmAppLoopData" "ATMLoopFuncAny"   
+
+{-
 *** CorePrep [Beseder.Atm.AtmLoopApp]:
 Result size of CorePrep
   = {terms: 19,038,
@@ -171,6 +176,7 @@ Result size of CorePrep
 -- :t validateSTransData' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t getError' atmAppLoopData (Proxy @(IdleState IO () () () () ()))
 -- :t validateSteps' atmAppLoopData  (Proxy @'["enableCardReader","releasingTerminal"]) (Proxy @(IdleState IO () () () () ()))
-
+-- :kind!  ValidateSteps '[] ATMLoopFuncAny NoSplitter (IdleState IO () () () () ())
+-- :kind!  ValidateSteps '["releasingTerminal"] ATMLoopFuncAny NoSplitter (IdleState IO () () () () ())
 -- intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
 -- intr = interpret atmAppLoopData   --  undefined --
