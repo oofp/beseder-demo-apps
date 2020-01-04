@@ -186,7 +186,9 @@ handleCleanup = do
 
 atmAppDataS = atmAppData undefined
 mkSTransDataType "atmAppDataS" "ATMFunc"   
-mkSTransDataTypeAny "atmAppDataS" "ATMFuncAny"   
+--mkSTransDataTypeAny "atmAppDataS" "ATMFuncSAny"   
+mkSTransDataTypeAny "atmAppData" "ATMFuncAny"   
+
 type ATMFuncResAny = Eval (ATMFuncAny NoSplitter (IdleState IO () () ()))
 -- :kind!  ValidateSteps ' [] ATMFuncAny NoSplitter (IdleState IO () () ())
 -- :kind!  ValidateSteps ' ["aboutToReleaseTerminal", "handleCleanup"] ATMFuncAny NoSplitter (IdleState IO () () ())
