@@ -34,7 +34,9 @@ The demo are using Beseder feature of deriving resource declaration from type cl
 ![AtmLoopApp.hs](!https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmLoopApp.hs)
 
 This implementation is similar to traditional loop with state defined as ADT. Just that with Beseder state variants are inferred. All possible resource state combinations are shown and state transitions are shown below:
-![ATM program implemented as event loop](https://user-images.githubusercontent.com/25211514/71424681-00c85180-2662-11ea-85df-03ab43cb24d5.png)
+
+![ATM program implemented as event loop](https://user-images.githubusercontent.com/25211514/71860168-d180fe00-30bf-11ea-9ab1-e57f84797d5d.png)
+
 
 ##### State diagram of of ATM program implemented as steps sequence. 
 ![AtmApp.hs](https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmApp.hs)
