@@ -101,7 +101,7 @@ atmAppLoopData = do
                   label #reqCancelled
                   invoke #acc CancelReq
                   invoke #term AckRequestCancellation
-              on @("acc" :? IsBalanceAvailable :&& "term" :? IsBalanceSelected) $ do
+              on @("acc" :? IsBalanceAvailable :&& "term" :? IsBalanceSelected) $ do 
                 blnc <- opRes #acc accountBalance
                 invoke #acc AckBalance
                 invoke #term (ShowBalance blnc)
@@ -178,5 +178,6 @@ Result size of CorePrep
 -- :t validateSteps' atmAppLoopData  (Proxy @'["enableCardReader","releasingTerminal"]) (Proxy @(IdleState IO () () () () ()))
 -- :kind!  ValidateSteps '[] ATMLoopFuncAny NoSplitter (IdleState IO () () () () ())
 -- :kind!  ValidateSteps '["releasingTerminal"] ATMLoopFuncAny NoSplitter (IdleState IO () () () () ())
+-- :kind! StateDiagramSym ATMLoopFuncAny (IdleState IO () () () () ())
 -- intr :: (_) => STrans (ContT Bool) TaskQ NoSplitter (IdleState TaskQ resDsp resCard resTerm resPace resAcc) _ _ _ ()  
 -- intr = interpret atmAppLoopData   --  undefined --

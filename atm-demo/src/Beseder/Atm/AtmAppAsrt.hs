@@ -19,16 +19,14 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module Beseder.Atm.AtmApp where
+module Beseder.Atm.AtmAppAsrt where
 
 import           Protolude                    hiding (Product, handle, return, gets, lift, liftIO,
-                                              (>>), (>>=), forever, until,try,on)
+                                              (>>), (>>=), forever, until,try,on, wait)
 import           Beseder.Base.ControlData                                               
-import           Beseder.Base.Common                                               
-import           Beseder.Misc.Misc  
-import           Control.Monad.Cont (ContT)                                            
 import           Data.String 
-    
+
+import           Beseder.Base.Common                                               
 import           Beseder.Atm.Resources.CashDispenserRes
 import           Beseder.Atm.Resources.AccountRes
 import qualified Beseder.Atm.Resources.AccountRes as AccountRes
@@ -42,70 +40,75 @@ type IdleState m resDsp resCard resTerm =
     ( StCardReaderIdle m resCard "card", StTerminalIdle m resTerm "term"))
    ]
 
+type IsIdleState = 
+  "dsp"  :? IsDispenserIdle :&&
+  "card" :? IsCardReaderIdle :&&
+  "term" :? IsTerminalIdle    
+
 dispenseTimeout :: Int
 dispenseTimeout = 30
 
---atmAppData :: forall m accRes termRes cardRes. 
---  ( Account m accRes, Terminal m termRes, CardReader m cardRes, _
---  ) => Beseder.Atm.Resources.AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
-atmAppData :: (_) => AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
-atmAppData accResPar = do
-  nextEv -- wait for card inserted (the only possible event)
-  try @("card" :? IsCardInserted) $ do
+-- tradeoff between easy to refactor and conciesness 
+wait = nextEv
+
+ensuring :: forall sp1 sp m f_sub. STransData m (sp :&& sp1) f_sub () -> STransData m sp (EmbedFunc sp1 f_sub) ()
+ensuring = try
+
+repeatBreakingOn :: forall sp1 sp m f_sub. STransData m (sp :&& (Not sp1)) f_sub () -> STransData m sp  (EmbedFunc (Not sp1) (ForeverFunc f_sub)) ()
+repeatBreakingOn hnd = try @(Not sp1) $ forever hnd
+
+waitFor = skipTo
+ 
+atmAppAsrtData :: (_) => AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
+atmAppAsrtData accResPar = do
+  assert @IsIdleState
+  wait >> assert @(Not ("card" :? IsCardReaderIdle))
+  ensuring @("card" :? IsCardInserted) $ do
     newRes #acc accResPar
-    handleAuthentication
-    -- label #authCompleted
-    try @(IsUserLoggedIn "acc") $ do 
-      handleLoggedInUser
-  handleCleanup    
+    handleAuthentication 
+    ensuring @(IsUserLoggedIn "acc") $ do 
+      handleUserSession
+  handleCleanup 
+  assert @IsIdleState   
   -- label #finishing  
 
 handleAuthentication :: (_) => STransData m sp _ () --IsActiveUser _ ()
-handleAuthentication = do 
-  try @(Not ("acc" :? IsAccountBlocked 
-        :|| "acc" :? IsUserAuthenticated 
-        :|| "term" :? IsPasscodeCancelled)) $ do
-    invoke #term GetPasscode
-    forever $ do
-      nextEv -- term: GettingPasscode -> [PasscodeProvided, PasscodeCancelled]
-      assert @("term" :? IsPasscodeProvided)
-      pcode <- opRes #term passcode
-      cardInfo <- opRes #card cardDetails 
-      invoke #acc (Authenticate cardInfo pcode)
-      label #auth1
-      nextEv -- acc: Authenticating -> [ UserAuthenticated m res, AuthenticationFailed m res, AccountBlocked m res]
-      label #auth2
-      invoke #term ShowNoticeWrongPasscode
-      invoke #acc AckAuthFailure
-      nextEv -- term: ShowingNoticeWrongPasscode -> GettingPasscode
-      -- label #handleAuthentication
+handleAuthentication = do --repeatUnless/ repeatWhile
+  assert @("acc" :? IsSessionIdle :&& "term" :? IsTerminalIdle)
+  invoke #term GetPasscode
+  repeatBreakingOn @("acc" :? IsAccountBlocked 
+                      :|| "acc" :? IsUserAuthenticated 
+                      :|| "term" :? IsPasscodeCancelled) $ do
+    wait >> assert @("term" :? IsPasscodeProvided) -- if cancel would break
+    pcode <- opRes #term passcode
+    cardInfo <- opRes #card cardDetails 
+    invoke #acc (Authenticate cardInfo pcode) >> wait >>
+      assert @("acc" :? IsAuthenticationFailed) -- if blocked or successfully authenticated would break
+    invoke #acc AckAuthFailure
+    invoke #term ShowNoticeWrongPasscode >> wait 
+    assert @("term" :? IsGettingPasscode)
 
-handleLoggedInUser :: (_) => STransData m sp _ () --IsActiveUser _ ()
-handleLoggedInUser = do
+handleUserSession :: (_) => STransData m sp _ () --IsActiveUser _ ()
+handleUserSession = do
   invoke #term SelectService
-  -- label #selectingService
   forever $ do
-    -- label #selectLoopStart  
-    nextEv
+    assert @("term" :? IsSelectingService) >> wait
     caseOf $ do
       on @("term" :? IsBalanceSelected) handleBalance
       on @("term" :? IsWithdrawalSelected) handleWithdrawal
       on @("term" :? IsQuitSelected) $ do
         invoke #term (ShowNoticeEjectingCard)
-        invoke #card EjectCard
+        invoke #card EjectCard -- it will break the loop (due to ensuring IsCardInserted)
       endCase  
-    -- newRes  #justForTest TimerRes -- to validate Forever
-    -- label #selectLoopCompleted  
   
 type IsActiveUser = NoSplitter :&& "card" :? IsCardInserted :&& (IsUserLoggedIn "acc") 
 
 handleBalance :: (_) => STransData m sp _ () --IsActiveUser _ ()
 handleBalance = do
-  -- label #balanceEntered
-  invoke #acc QueryBalance 
-  nextEv
+  assert @("term" :? IsBalanceSelected :&& "acc" :? IsUserAuthenticated)
+  invoke #acc QueryBalance >> wait
   caseOf $ do
-    on @("acc" :? IsBalanceAvailable) $ do -- not cancelled 
+    on @("acc" :? IsBalanceAvailable) $ do 
       blnc <- opRes #acc accountBalance
       invoke #term (ShowBalance blnc)
       invoke #acc AckBalance
@@ -113,56 +116,53 @@ handleBalance = do
     on @("term" :? IsRequestCancelled) 
       handleCancelReq 
     endCase
-  -- label #balanceCompleted
+  assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
-handleWithdrawal :: (_) => STransData m sp _ () -- IsActiveUser _ ()
+handleWithdrawal :: (_) => STransData m sp _ () 
 handleWithdrawal = do
-  -- label #withdrawalEntered
+  assert @("term" :? IsWithdrawalSelected :&& "acc" :? IsUserAuthenticated)
   amnt <- opRes #term withdrawalAmount
-  invoke #acc (ReserveFunds amnt)
-  -- label #withdrawal
-  nextEv
-  -- label #withdrawalNext
+  invoke #acc (ReserveFunds amnt) >> wait
   caseOf $ do
     on @("acc" :? IsFundsReserved) $ do
-      block $ do
-        invoke #term (ShowWithdrawInstruction amnt)
-        invoke #dsp (DispenseCash amnt)
-        newRes #dispTimer TimerRes
-        invoke #dispTimer (StartTimer dispenseTimeout)
-      nextEv
+      -- scopeRes $ do -- scope dispTimer
+      invoke #term (ShowWithdrawInstruction amnt)
+      invoke #dsp (DispenseCash amnt)
+      newRes #dispTimer TimerRes
+      invoke #dispTimer (StartTimer dispenseTimeout)
+      wait 
       on @("dispTimer" :? IsTimerTriggered) $ do
         invoke #dsp RollbackCash
         nextEv
-        -- -- label #dispensingRollback
       clear #dispTimer  
       caseOf $ do
-        on @("dsp" :? IsCashCollected) $ block $ do 
+        on @("dsp" :? IsCashCollected) $ do 
           invoke #dsp AckCollected
           invoke #acc ConfirmWithdrawal
           invoke #term SelectService
           -- label #dispensingCollected
-        on @("dsp" :? IsRolledBack) $ block $ do  
+        on @("dsp" :? IsRolledBack) $ do  
           invoke #dsp AckRolledBack
           invoke #acc RollbackWithdrawal
           invoke #term (ShowNoticeAndQuit "Withdrawal timeout. Keeping your card")
-          invoke #card EatCard 
-          -- label #dispensingTimeout -- will be empty as we have condition on CardInserted
+          invoke #card EatCard -- break here due to ensuring CardInserted
         endCase  
     on @("term" :? IsRequestCancelled) $ do
       handleCancelReq
       -- label #withdrawCancelled
     on @("acc" :? IsFundsReservationFailed) $ do
-      invoke #acc AckReserveFailure
       invoke #term (ShowNoticeAndSelect "Cannot withdraw this amount")
+      invoke #acc AckReserveFailure
       nextEv
-      -- label #fundsReservationFailed
     endCase  
+  assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
 handleCancelReq :: (_) => STransData m sp _ ()    
 handleCancelReq = do
+  assert @("term" :? IsRequestCancelled)
   invoke #acc CancelReq
   invoke #term AckRequestCancellation
+  assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
 handleCleanup :: (_) => STransData m sp _ ()      
 handleCleanup = do
@@ -187,14 +187,15 @@ handleCleanup = do
   invoke #term ReleaseTerminal
   pumpEvents
   invoke #card EnableCardReader  
+  assert @IsIdleState
 
-atmAppDataS = atmAppData undefined
-mkSTransDataType "atmAppDataS" "ATMFunc"   
---mkSTransDataTypeAny "atmAppDataS" "ATMFuncSAny"   
-mkSTransDataTypeAny "atmAppData" "ATMFuncAny"   
+mkSTransDataTypeAny "atmAppAsrtData" "ATMAsrtFunc"   
 
-type ATMFuncResAny = Eval (ATMFuncAny NoSplitter (IdleState IO () () ()))
--- :kind!  ValidateSteps '[] ATMFuncAny NoSplitter (IdleState IO () () ())
+type ATMRes = Eval (ATMAsrtFunc NoSplitter (IdleState IO () () ()))
+type ATMValid = ValidateSteps '[] ATMAsrtFunc NoSplitter (IdleState IO () () ())
+type ATMDiagram = StateDiagramSym ATMAsrtFunc (IdleState IO () () ())
+
+-- :kind!  ValidateSteps '[] ATMAsrtFunc NoSplitter (IdleState IO () () ())
 -- :kind!  ValidateSteps '["aboutToReleaseTerminal", "handleCleanup"] ATMFuncAny NoSplitter (IdleState IO () () ())
 --
   
