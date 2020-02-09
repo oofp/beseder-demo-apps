@@ -31,7 +31,7 @@ The demo are using Beseder feature of deriving resource declaration from type cl
 ### ATM Program example
 
 ##### State diagram of ATM program implemented as event loop. 
-![AtmLoopApp.hs](!https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmLoopApp.hs)
+[AtmLoopApp.hs](!https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmLoopApp.hs)
 
 This implementation is similar to traditional loop with state defined as ADT. Just that with Beseder state variants are inferred. All possible resource state combinations are shown and state transitions are shown below:
 
@@ -39,7 +39,7 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 
 
 ##### State diagram of of ATM program implemented as steps sequence. 
-![AtmApp.hs](https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmApp.hs)
+[AtmApp.hs](https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmApp.hs)
 
 ![ATM State Diagram](https://user-images.githubusercontent.com/25211514/71395053-52c99280-25e2-11ea-9eb4-dd4412696791.png)
 
@@ -54,8 +54,8 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 * Once parties are connected, the user can mute herself.
 * Web UI will be implemented using [Server Driven UI Beseder binding](https://github.com/oofp/sdui/tree/master/sdui-beseder)
 
-#### Outbound call resource state diagram 
+#### [Outbound call resource state diagram](https://github.com/oofp/beseder-demo-apps/blob/master/callback-demo/src/Beseder/Callback/Resources/OutboundCallRes.hs) 
 ![outbound_call](https://user-images.githubusercontent.com/25211514/74104453-ae17fb80-4b22-11ea-8167-9312d557fbc7.png)
 
-#### Callback resource state diagram 
+#### [Callback resource state diagram](https://github.com/oofp/beseder-demo-apps/blob/master/callback-demo/src/Beseder/Callback/Resources/CallbackRes.hs) 
 ![callback](https://user-images.githubusercontent.com/25211514/74112727-20adc900-4b6d-11ea-88b2-fd81c26488a5.png)
