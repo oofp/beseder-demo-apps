@@ -52,8 +52,10 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 * Once destination answered the call, both parties are connected.
 * At any time user can cancel or hang up.
 * Once parties are connected, the user can mute herself.
-* Web UI will be implemented using ![Server Driven UI Beseder binding](https://github.com/oofp/sdui/tree/master/sdui-beseder)
+* Web UI will be implemented using [Server Driven UI Beseder binding](https://github.com/oofp/sdui/tree/master/sdui-beseder)
 
 #### Outbound call resource state diagram 
 ![outbound_call](https://user-images.githubusercontent.com/25211514/74104453-ae17fb80-4b22-11ea-8167-9312d557fbc7.png)
 
+#### Callback resource state diagram 
+![callback](https://user-images.githubusercontent.com/25211514/74112727-20adc900-4b6d-11ea-88b2-fd81c26488a5.png)
