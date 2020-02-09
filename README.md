@@ -45,11 +45,15 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 
 
 ## Callback demo
-This demo shows web controlled setup of callback call. 
-The users enters its own phone number abd destination number
-First call reaches the caller's phone and then call is placed to destination.
-During call setup, user is listening to the ringback tone.
-Once destination answered the call, both parties are connected.
-At any time user can cancel or hang up.
-Once parties are connected, the user can mute herself.
+### This demo shows web controlled setup of callback call. 
+* The users enters its own phone number abd destination number
+* First call reaches the caller's phone and then call is placed to destination.
+* During call setup, user is listening to the ringback tone.
+* Once destination answered the call, both parties are connected.
+* At any time user can cancel or hang up.
+* Once parties are connected, the user can mute herself.
+* Web UI will be implemented using ![Server Driven UI Beseder binding](https://github.com/oofp/sdui/tree/master/sdui-beseder)
+
+#### Outbound call resource state diagram 
+![outbound_call](https://user-images.githubusercontent.com/25211514/74104453-ae17fb80-4b22-11ea-8167-9312d557fbc7.png)
 
