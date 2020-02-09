@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall 
   exposed-modules:     Beseder.Callback.Resources.OutboundCallRes
+                     , Beseder.Callback.Resources.CallbackRequest
   other-modules:       
   build-depends:       base >= 4.7 && < 5
                      , protolude

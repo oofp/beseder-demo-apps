@@ -16,7 +16,6 @@
 module Beseder.Callback.Resources.OutboundCallRes where
 
 import           Protolude    
-import           Haskus.Utils.Variant
 import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
