@@ -42,3 +42,14 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 ![AtmApp.hs](https://github.com/oofp/beseder-demo-apps/blob/master/atm-demo/src/Beseder/Atm/AtmApp.hs)
 
 ![ATM State Diagram](https://user-images.githubusercontent.com/25211514/71395053-52c99280-25e2-11ea-9eb4-dd4412696791.png)
+
+
+## Callback demo
+This demo shows web controlled setup of callback call. 
+The users enters its own phone number abd destination number
+First call reaches the caller's phone and then call is placed to destination.
+During call setup, user is listening to the ringback tone.
+Once destination answered the call, both parties are connected.
+At any time user can cancel or hang up.
+Once parties are connected, the user can mute herself.
+
