@@ -20,13 +20,13 @@ import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
 
-data CallbackRequest   = CallbackRequest {localNumber :: Text, remoteNumer :: Text} deriving (Eq, Show)
+data CallbackRequest   = CallbackRequest {localNumber :: Text, remoteNumber :: Text} deriving (Eq, Show)
 
 data CallbackProgressState
   = DialingLocal
   | RingbackLocal
   | DialingRemote
-  | RingbcackRemote
+  | RingbackRemote
    deriving (Eq, Show)
 
 data CallbackRequestFailed = CallbackRequestFailed deriving (Eq, Show)  
@@ -84,3 +84,5 @@ class Monad m => Callback m res where
 --  
 buildRes ''Callback
 
+callbackRequest :: Callback m res => StCallRequestReceived m res name -> m CallbackRequest
+callbackRequest (St stData) = _callbackRequest stData
