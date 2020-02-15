@@ -8,9 +8,6 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - ../../Beseder
-- ../../sdui
-- ../../sdui-beseder
-- ../../webtools
 - subdirs:
   - haskus-utils
   - haskus-utils-data
