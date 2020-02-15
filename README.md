@@ -59,3 +59,8 @@ This implementation is similar to traditional loop with state defined as ADT. Ju
 
 #### [Callback resource state diagram](https://github.com/oofp/beseder-demo-apps/blob/master/callback-demo/src/Beseder/Callback/Resources/CallbackRes.hs) 
 ![callback](https://user-images.githubusercontent.com/25211514/74112727-20adc900-4b6d-11ea-88b2-fd81c26488a5.png)
+
+---
+#### [Callback application with timers for call setup and call duration](https://github.com/oofp/beseder-demo-apps/blob/master/callback-demo/src/Beseder/Callback/CallbackTimerApp.hs)
+
+![](callback-demo/docs/CallbackTimerAppBlocks.svg)
