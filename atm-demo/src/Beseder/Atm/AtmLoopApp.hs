@@ -35,7 +35,7 @@ import           Beseder.Atm.Resources.CardReaderRes
 import           Beseder.Atm.Resources.TerminalRes
 import           Beseder.Resources.Timer
 import           GHC.Exts (Any)    
---import           Beseder.Resources.Timer.PaceRes
+import           Beseder.Resources.Timer.PaceRes
 
 type IdleState m resDsp resCard resTerm resPace resAcc = 
   '[( StDispenserIdle m resDsp "dsp", 

@@ -13,7 +13,8 @@
 {-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE UndecidableInstances   #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedLabels       #-}
+{-# LANGUAGE AllowAmbiguousTypes    #-}
 
 {-# OPTIONS_GHC -fomit-interface-pragmas #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
@@ -33,6 +34,7 @@ import qualified Beseder.Atm.Resources.AccountRes as AccountRes
 import           Beseder.Atm.Resources.CardReaderRes
 import           Beseder.Atm.Resources.TerminalRes
 import           Beseder.Resources.Timer
+--import           Beseder.Atm.Resources.Types.Domain                                               
 import           GHC.Exts (Any)    
 
 type IdleState m resDsp resCard resTerm = 
@@ -59,20 +61,27 @@ repeatBreakingOn hnd = try @(Not sp1) $ forever hnd
 
 waitFor = skipTo
  
-atmAppAsrtData :: (_) => AccountRes.ResPar m accRes -> STransData m NoSplitter _ ()
+atmAppAsrtData :: forall resCard resAcc resTerm m.
+  ( CardReader m resCard
+  , Account m resAcc
+  , Terminal m resTerm
+  ) => AccountRes.ResPar m resAcc -> STransData m NoSplitter _ ()
 atmAppAsrtData accResPar = do
   assert @IsIdleState
   wait >> assert @(Not ("card" :? IsCardReaderIdle))
   ensuring @("card" :? IsCardInserted) $ do
     newRes #acc accResPar
-    handleAuthentication 
+    handleAuthentication @resCard @resTerm
     ensuring @(IsUserLoggedIn "acc") $ do 
-      handleUserSession
+      handleUserSession @resAcc @resTerm
   handleCleanup 
   assert @IsIdleState   
   -- label #finishing  
 
-handleAuthentication :: (_) => STransData m sp _ () --IsActiveUser _ ()
+handleAuthentication :: forall resCard resTerm m sp.
+  ( CardReader m resCard
+  , Terminal m resTerm
+  ) => STransData m sp _ () --IsActiveUser _ ()
 handleAuthentication = do --repeatUnless/ repeatWhile
   assert @("acc" :? IsSessionIdle :&& "term" :? IsTerminalIdle)
   invoke #term GetPasscode
@@ -80,22 +89,25 @@ handleAuthentication = do --repeatUnless/ repeatWhile
                       :|| "acc" :? IsUserAuthenticated 
                       :|| "term" :? IsPasscodeCancelled) $ do
     wait >> assert @("term" :? IsPasscodeProvided) -- if cancel would break
-    pcode <- opRes #term passcode
-    cardInfo <- opRes #card cardDetails 
+    pcode <- opRes #term (passcode @resTerm)
+    cardInfo <- opRes #card (cardDetails @resCard)
     invoke #acc (Authenticate cardInfo pcode) >> wait >>
       assert @("acc" :? IsAuthenticationFailed) -- if blocked or successfully authenticated would break
     invoke #acc AckAuthFailure
     invoke #term ShowNoticeWrongPasscode >> wait 
     assert @("term" :? IsGettingPasscode)
 
-handleUserSession :: (_) => STransData m sp _ () --IsActiveUser _ ()
+handleUserSession :: forall resAcc resTerm m sp.
+  ( Account m resAcc
+  , Terminal m resTerm
+  ) => STransData m sp _ () --IsActiveUser _ ()
 handleUserSession = do
   invoke #term SelectService
   forever $ do
     assert @("term" :? IsSelectingService) >> wait
     caseOf $ do
-      on @("term" :? IsBalanceSelected) handleBalance
-      on @("term" :? IsWithdrawalSelected) handleWithdrawal
+      on @("term" :? IsBalanceSelected) (handleBalance @resAcc)
+      on @("term" :? IsWithdrawalSelected) (handleWithdrawal @resTerm)
       on @("term" :? IsQuitSelected) $ do
         invoke #term (ShowNoticeEjectingCard)
         invoke #card EjectCard -- it will break the loop (due to ensuring IsCardInserted)
@@ -103,13 +115,13 @@ handleUserSession = do
   
 type IsActiveUser = NoSplitter :&& "card" :? IsCardInserted :&& (IsUserLoggedIn "acc") 
 
-handleBalance :: (_) => STransData m sp _ () --IsActiveUser _ ()
+handleBalance :: forall resAcc m sp. Account m resAcc => STransData m sp _ () --IsActiveUser _ ()
 handleBalance = do
   assert @("term" :? IsBalanceSelected :&& "acc" :? IsUserAuthenticated)
   invoke #acc QueryBalance >> wait
   caseOf $ do
     on @("acc" :? IsBalanceAvailable) $ do 
-      blnc <- opRes #acc accountBalance
+      blnc <- opRes #acc (accountBalance @resAcc)
       invoke #term (ShowBalance blnc)
       invoke #acc AckBalance
       nextEv
@@ -118,10 +130,10 @@ handleBalance = do
     endCase
   assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
-handleWithdrawal :: (_) => STransData m sp _ () 
+handleWithdrawal :: forall resTerm m sp. (Terminal m resTerm) => STransData m sp _ () 
 handleWithdrawal = do
   assert @("term" :? IsWithdrawalSelected :&& "acc" :? IsUserAuthenticated)
-  amnt <- opRes #term withdrawalAmount
+  amnt <- opRes #term (withdrawalAmount @resTerm)
   invoke #acc (ReserveFunds amnt) >> wait
   caseOf $ do
     on @("acc" :? IsFundsReserved) $ do
@@ -157,14 +169,14 @@ handleWithdrawal = do
     endCase  
   assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
-handleCancelReq :: (_) => STransData m sp _ ()    
+handleCancelReq :: STransData m sp _ ()    
 handleCancelReq = do
   assert @("term" :? IsRequestCancelled)
   invoke #acc CancelReq
   invoke #term AckRequestCancellation
   assert @("term" :? IsSelectingService :&& "acc" :? IsUserAuthenticated)
 
-handleCleanup :: (_) => STransData m sp _ ()      
+handleCleanup :: STransData m sp _ ()      
 handleCleanup = do
   -- label #enteredCleanup  
   on @("acc" :? IsUserAuthenticated) $ do

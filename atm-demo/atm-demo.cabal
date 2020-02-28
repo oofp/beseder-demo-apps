@@ -16,8 +16,17 @@ cabal-version:       >=1.10
 library 
   hs-source-dirs:      src
   ghc-options:         -Wall 
-  exposed-modules:     Beseder.Atm.Resources.CardReaderRes
-  other-modules:       
+  exposed-modules:     Beseder.Atm.AtmAppUI
+  other-modules:       Beseder.Atm.Resources.CardReaderRes
+                     , Beseder.Atm.Resources.AccountRes
+                     , Beseder.Atm.Resources.TerminalRes
+                     , Beseder.Atm.Resources.CashDispenserRes
+                     , Beseder.Atm.Resources.Types.Domain
+                     , Beseder.Atm.Resources.UIImpl.AccountUI
+                     , Beseder.Atm.Resources.UIImpl.TerminalUI
+                     , Beseder.Atm.Resources.UIImpl.CashDispenserUI
+                     , Beseder.Atm.Resources.UIImpl.CardReaderUI
+                     , Beseder.Atm.AtmAppAsrt
   build-depends:       base >= 4.7 && < 5
                      , protolude
                      , beseder
@@ -39,7 +48,6 @@ library
                      , pretty-simple
                      , sdui
                      , sdui-beseder
-                     , newtype
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings, NoImplicitPrelude, TypeApplications, OverloadedLabels
 
@@ -58,6 +66,8 @@ executable HelloAtm
                     , haskus-utils
                     , random-shuffle
                     , bytestring
+                    , sdui
+                    , sdui-beseder
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings, NoImplicitPrelude
 

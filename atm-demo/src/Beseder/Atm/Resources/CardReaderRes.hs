@@ -27,6 +27,8 @@ data AckInvalidCard = AckInvalidCard deriving (Eq, Show)
 data ReleaseReader = ReleaseReader deriving (Eq, Show)
 data EnableCardReader = EnableCardReader deriving (Eq, Show)
 
+instance GetInstance ReleaseReader where getInstance = ReleaseReader
+
 class Monad m => CardReader m res where
   data  CardReaderIdle m res 
   data  CardInserted m res 
@@ -55,5 +57,5 @@ buildRes ''CardReader
 -- manual additions
 type instance TermRequest (StCardReaderIdle m res name) = ReleaseReader
 
-cardDetails :: CardReader m res => StCardInserted m res name -> m CardDetails
+cardDetails :: forall res m name. CardReader m res => StCardInserted m res name -> m CardDetails
 cardDetails (St cardInserted) = _cardDetails cardInserted

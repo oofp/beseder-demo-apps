@@ -17,7 +17,6 @@
 module Beseder.Atm.Resources.AccountRes where
 
 import           Protolude    
-import           Haskus.Utils.Variant
 import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Base.ControlData
@@ -76,7 +75,7 @@ class Monad m => Account m res where
 --  
 buildRes ''Account
 
-accountBalance :: (Account m res) => StBalanceAvailable m res name -> m Funds
+accountBalance :: forall res m name. (Account m res) => StBalanceAvailable m res name -> m Funds
 accountBalance (St st) = _accountBalance st
 
 type IsUserLoggedIn name 

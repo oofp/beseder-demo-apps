@@ -24,38 +24,30 @@ import           Beseder.Atm.Resources.CashDispenserRes
 import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIRes
 import           Beseder.SDUI.SDUIHelper
+import           SDUI.Data.Form  
 
 data UICashDisp = UICashDisp deriving (Eq, Show)
 
-idleReq :: ShowStatic
-idleReq = showNotice "Dispenser is idle"
-
-collectedReq :: ShowStatic
-collectedReq = showNotice "Cash collected"
-
 instance (TaskPoster m, SDUIRes m UI) => CashDispenser m UICashDisp where
-  newtype  DispenserIdle m UICashDisp = DispenserIdle (UIStatic m) 
-  newtype  Dispensing m UICashDisp = Dispensing (UIDyn  m)
-  newtype  CashCollected m UICashDisp = CashCollected (UIStatic m)
-  newtype  RollingBack m UICashDisp = RollingBack (UIDyn m)
-  newtype  RolledBack m UICashDisp = RolledBack (UIStatic m)
+  newtype  DispenserIdle m UICashDisp = DispenserIdle (UIStaticData m) 
+  newtype  Dispensing m UICashDisp = Dispensing (UIDynData  m)
+  newtype  CashCollected m UICashDisp = CashCollected (UIStaticData m)
+  newtype  RollingBack m UICashDisp = RollingBack (UIDynData m)
+  newtype  RolledBack m UICashDisp = RolledBack (UIStaticData m)
   newtype ResPar m UICashDisp = MkUICashDisp UIParams
 
-  newCashDispenser param = newResFromUI idleReq param
+  newCashDispenser = newResFromUIData
   
-  dispense (DispenseCash _) (DispenserIdle uiRes) = reqFromUI (showButtons "Dispensing:" ["Collected"]) uiRes
-  rollback RollbackCash (Dispensing uiRes) = reqFromUI (showButtons "Rollingback:" ["Rolledback","Still Collected"]) uiRes
-  ackRoolback AckRolledBack (RolledBack uiRes) = reqFromUI idleReq uiRes
-  ackCollected AckCollected (CashCollected uiRes) = reqFromUI idleReq uiRes
-  dispensingTransition (Dispensing uiRes) cbFunc = transFromUI1 uiRes collectedReq cbFunc 
-  rollbackTransition (RollingBack uiRes) cbFunc = transFromBtn2 uiRes "Rolledback" (showNotice "Rolled back") collectedReq cbFunc  
-  termDispenser (DispenserIdle uiRes) = termFromUI uiRes
+  dispense (DispenseCash _) (DispenserIdle st) = reqUI1 st
+  rollback RollbackCash (Dispensing st) = reqUI1 st
+  ackRoolback AckRolledBack (RolledBack st) = reqUI1 st
+  ackCollected AckCollected (CashCollected st) = reqUI1 st
+  dispensingTransition = uiTrans 
+  rollbackTransition = uiTrans
+  termDispenser = termUI 
 
-  {-  
-  ackRoolback :: RequestDef m AckRolledBack (RolledBack m UICashDisp) '[DispenserIdle m UICashDisp]  
-  ackCollected :: RequestDef m AckCollected (CashCollected m UICashDisp) '[DispenserIdle m UICashDisp]  
-  dispensingTransition :: TransitionDef m (Dispensing m UICashDisp) '[CashCollected m UICashDisp]
-  rollbackTransition :: TransitionDef m (RollingBack m UICashDisp) '[RolledBack m UICashDisp, CashCollected m UICashDisp]  
-  termDispenser :: TermDef m (DispenserIdle m UICashDisp)
-  -}
+instance GetFormEntries (CashCollected m UICashDisp) where
+  getFormEntris _ = []
 
+instance GetFormEntries (RolledBack m UICashDisp) where
+  getFormEntris _ = []

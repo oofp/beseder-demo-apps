@@ -16,7 +16,6 @@
 module Beseder.Atm.Resources.TerminalRes where
 
 import           Protolude    
-import           Haskus.Utils.Variant
 import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
@@ -96,8 +95,8 @@ class Monad m => Terminal m res where
 --  
 buildRes ''Terminal
 
-passcode :: (Terminal m res) => StPasscodeProvided m res name -> m PassCode
+passcode :: forall res m name. (Terminal m res) => StPasscodeProvided m res name -> m PassCode
 passcode (St st) = _passcode st
 
-withdrawalAmount :: (Terminal m res) => StWithdrawalSelected m res name -> m Funds
+withdrawalAmount :: forall res m name. (Terminal m res) => StWithdrawalSelected m res name -> m Funds
 withdrawalAmount (St st) = _withdrawalAmount st
