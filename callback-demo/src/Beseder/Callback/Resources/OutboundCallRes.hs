@@ -12,6 +12,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeOperators         #-}
 
 module Beseder.Callback.Resources.OutboundCallRes where
 
@@ -19,6 +20,7 @@ import           Protolude
 import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
+import           Beseder.Misc.Misc  
 
 data MakeCall   = MakeCall {src :: Text, dest :: Text} deriving (Eq, Show)
 data DropCall   = DropCall deriving (Eq, Show)
@@ -69,4 +71,11 @@ class Monad m => OutboundCall m res where
 
 --  
 buildRes ''OutboundCall
+
+type instance TermRequest (StCallReachedDest m res n) = DropCall
+type instance TermRequest (StCallConnected m res n) = DropCall
+type instance TermRequest (StCallInitiated m res n) = DropCall
+type instance TermRequest (StCallPlayingRingback m res n) = DropCall
+type instance TermRequest (StCallBridged m res n) = DropCall
+type instance TermRequest (StCallMuted m res n) = DropCall
 

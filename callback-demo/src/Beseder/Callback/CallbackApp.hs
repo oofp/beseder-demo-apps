@@ -23,7 +23,7 @@ module Beseder.Callback.CallbackApp where
 
 import           Protolude                    hiding (Product, handle, return, gets, lift, liftIO,
                                               (>>), (>>=), forever, until,try,on)
--- import           Beseder.Base.Base
+--import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.Base.ControlData                                               
 -- import           Beseder.Misc.Misc  
@@ -103,7 +103,8 @@ type CbDiagram = StateDiagramSym CbFunc InitState
 -- :kind!  ValidateSteps '["aboutToReleaseTerminal", "handleCleanup"] ATMFuncAny NoSplitter (IdleState IO () () ())
 -- :kind!  CbValid
 
-
+-- ghcid --command "stack ghci ./src/Beseder/Callback/CallbackApp.hs"
+-- ghcid --command "stack ghci ./src/Beseder/Callback/CallbackApp.hs" --test ":kind! CbValid"
 {-
 = '[ '("failures",
        '["cb = CallbackProgress , inCall = CallConnected , outCall = CallFailed",
