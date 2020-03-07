@@ -169,14 +169,14 @@ dealerStep (GameState {..}) =
         dealerScore = handBestScore goodHand
         hp = (playerHand, goodHand, newPack)
       in 
-        if dealerScore < 17
-          then toVariant $ gameState @'DealerNextTurnStatus hp-- toVariantAt @0 $ gameState hp
-          else 
-            let playerScore = handBestScore playerHand
-            in case compare playerScore dealerScore of
-              GT -> toVariant $ gameOver @'PlayerWon hp 
-              LT -> toVariant $ gameOver @'DealerWon hp 
-              EQ -> toVariant $ gameOver @'Push hp
+        let playerScore = handBestScore playerHand
+        in if dealerScore < 17 && playerScore>dealerScore 
+            then toVariant $ gameState @'DealerNextTurnStatus hp-- toVariantAt @0 $ gameState hp
+            else 
+              case compare playerScore dealerScore of
+                GT -> toVariant $ gameOver @'PlayerWon hp 
+                LT -> toVariant $ gameOver @'DealerWon hp 
+                EQ -> toVariant $ gameOver @'Push hp
 
 -- more utilites function              
 getPlayerCards :: GameState gameStatus handStatus dealerStatus -> HandCards
@@ -189,6 +189,7 @@ getGameResult _ = Proxy
 
 getGameResultText :: (Typeable res) => GameOver (res :: GameResult) -> Text
 getGameResultText = show . typeRep . getGameResult
+
 
 {-
 -- use type class to get game summary from Variant with possible game results

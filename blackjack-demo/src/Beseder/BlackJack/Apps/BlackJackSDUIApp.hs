@@ -45,8 +45,7 @@ bjUiRes ctx = MkUI (UIParams ctx (EntryID "bjUI") (EntryTitle "Black Jack"))
 type HS = '[PlayerHit,PlayerStand]
 
 blackJackSDUIApp :: forall m. 
-  ( SDUIRes m UI
-  , TaskPoster m
+  ( _ -- TaskPoster m
   ) =>  SDUIContext -> STransData m NoSplitter _ () 
 blackJackSDUIApp sduiCtx = do 
   newRes #ui (bjUiRes @m sduiCtx) 
@@ -67,7 +66,7 @@ blackJackSDUIApp sduiCtx = do
             label #playerHandOut
         label #dealerStep
         cards <- gets #game cardsOfPlayer
-        uiUnit #ui (("Your cards:" :: Text) <> show cards) "Let dealer to draw the first card"
+        uiUnit #ui (("Your cards:" :: Text) <> show cards) "Let dealer to draw two card"
         invoke #game DealerFirstStep
         forever $ do 
           dlrCards <- gets #game cardsOfDealer
