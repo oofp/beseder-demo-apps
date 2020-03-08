@@ -79,8 +79,8 @@ instance (TaskPoster m, SDUIRes m UI) => Terminal m UITerm where
   
   termSession = termUI
 
-  _passcode (PasscodeProvided st) = return $ PassCode $ getTextFromResp st "passcode" 
-  _withdrawalAmount (WithdrawalSelected st) = return $ Funds $ getNumFromResp st "funds" 
+  _passcode (PasscodeProvided st) = PassCode $ getTextFromResp st "passcode" 
+  _withdrawalAmount (WithdrawalSelected st) = Funds $ getNumFromResp st "funds" 
 
 instance GetFormEntries (BalanceSelected m UITerm) where
   getFormEntris _ = []

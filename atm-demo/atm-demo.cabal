@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 library 
   hs-source-dirs:      src
   ghc-options:         -Wall 
-  exposed-modules:     Beseder.Atm.AtmAppUI
+  exposed-modules:     Beseder.Atm.AtmAppUIProp
   other-modules:       Beseder.Atm.Resources.CardReaderRes
                      , Beseder.Atm.Resources.AccountRes
                      , Beseder.Atm.Resources.TerminalRes
@@ -26,7 +26,7 @@ library
                      , Beseder.Atm.Resources.UIImpl.TerminalUI
                      , Beseder.Atm.Resources.UIImpl.CashDispenserUI
                      , Beseder.Atm.Resources.UIImpl.CardReaderUI
-                     , Beseder.Atm.AtmAppAsrt
+                     , Beseder.Atm.AtmAppProp
   build-depends:       base >= 4.7 && < 5
                      , protolude
                      , beseder
@@ -73,4 +73,4 @@ executable HelloAtm
 
 source-repository head
   type:     git
-  location: https://github.com/oofp/Beseder
+  location: https://github.com/oofp/beseder-demo-apps/tree/master/atm-demo

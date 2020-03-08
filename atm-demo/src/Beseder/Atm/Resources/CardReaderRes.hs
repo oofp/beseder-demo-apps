@@ -21,6 +21,9 @@ import           Beseder.Base.Common
 import           Beseder.Resources.ResourceDef
 import           Beseder.Atm.Resources.Types.Domain
 
+data CardDetailsProp
+type instance PropType CardDetailsProp = CardDetails
+
 data EjectCard = EjectCard deriving (Eq, Show)
 data EatCard = EatCard deriving (Eq, Show)
 data AckInvalidCard = AckInvalidCard deriving (Eq, Show)
@@ -49,7 +52,7 @@ class Monad m => CardReader m res where
   eatingTransition :: TransitionDef m (EatingCard m res) '[CardReaderReleased m res]
   termReader :: TermDef m (CardReaderReleased m res)
 
-  _cardDetails :: CardInserted m res -> m CardDetails
+  _cardDetails :: CardInserted m res -> CardDetails
   
 --  
 buildRes ''CardReader
@@ -58,4 +61,7 @@ buildRes ''CardReader
 type instance TermRequest (StCardReaderIdle m res name) = ReleaseReader
 
 cardDetails :: forall res m name. CardReader m res => StCardInserted m res name -> m CardDetails
-cardDetails (St cardInserted) = _cardDetails cardInserted
+cardDetails (St cardInserted) = return $ _cardDetails cardInserted
+
+instance CardReader m res => Property  (StCardInserted m res name) CardDetailsProp where
+  getProp (St st) _px = _cardDetails st

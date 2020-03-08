@@ -53,7 +53,7 @@ instance (TaskPoster m, SDUIRes m UI) => CardReader m UICardReader where
 
   termReader = termUI
 
-  _cardDetails (CardInserted st) = return $ CardDetails $ getTextFromResp st "cardDetails" 
+  _cardDetails (CardInserted st) = CardDetails $ getTextFromResp st "cardDetails" 
 
 instance GetFormEntries (CardInvalid m UICardReader) where
   getFormEntris _ = []

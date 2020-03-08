@@ -35,6 +35,12 @@ data ShowInvalidCardNotice = ShowInvalidCardNotice deriving (Eq, Show)
 data ReleaseTerminal = ReleaseTerminal deriving (Eq, Show)
 data AckRequestCancellation = AckRequestCancellation deriving (Eq, Show)
 
+data PassCodeProp
+data WithdrawalAmountProp
+
+type instance PropType PassCodeProp = PassCode 
+type instance PropType WithdrawalAmountProp = Funds 
+
 class Monad m => Terminal m res where
   data  TerminalIdle m res 
   data  GettingPasscode m res 
@@ -89,14 +95,20 @@ class Monad m => Terminal m res where
   releasingTerminalTransition :: TransitionDef m (ReleasingTerminal m res) '[TerminalIdle m res] 
   termSession :: TermDef m (TerminalIdle m res)
 
-  _passcode :: PasscodeProvided m res -> m PassCode
-  _withdrawalAmount :: WithdrawalSelected m res -> m Funds
+  _passcode :: PasscodeProvided m res -> PassCode
+  _withdrawalAmount :: WithdrawalSelected m res -> Funds
 
 --  
 buildRes ''Terminal
 
 passcode :: forall res m name. (Terminal m res) => StPasscodeProvided m res name -> m PassCode
-passcode (St st) = _passcode st
+passcode (St st) = return $ _passcode st
 
 withdrawalAmount :: forall res m name. (Terminal m res) => StWithdrawalSelected m res name -> m Funds
-withdrawalAmount (St st) = _withdrawalAmount st
+withdrawalAmount (St st) = return $ _withdrawalAmount st
+
+instance Terminal m res => Property  (StPasscodeProvided m res name) PassCodeProp where
+  getProp (St st) _px = _passcode st
+
+instance Terminal m res => Property  (StWithdrawalSelected m res name) WithdrawalAmountProp where
+  getProp (St st) _px = _withdrawalAmount st

@@ -63,7 +63,7 @@ instance (TaskPoster m, SDUIRes m UI) => Account m UIAccount where
 
   termSession = termUI
 
-  _accountBalance (BalanceAvailable st) = return $ Funds $ getNumFromResp st "balance" 
+  _accountBalance (BalanceAvailable st) = Funds $ getNumFromResp st "balance" 
   
 
 instance GetFormEntries (BalanceAvailable m UIAccount) where

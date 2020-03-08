@@ -23,6 +23,9 @@ import           Beseder.Base.ControlData
 import           Beseder.Resources.ResourceDef
 import           Beseder.Atm.Resources.Types.Domain
 
+data BalanceProp
+type instance PropType BalanceProp = Funds
+
 data Authenticate = Authenticate CardDetails PassCode deriving (Eq, Show)
 data Logout = Logout deriving (Eq, Show)
 data ReserveFunds = ReserveFunds Funds deriving (Eq, Show) 
@@ -69,14 +72,17 @@ class Monad m => Account m res where
   balanceTransition :: TransitionDef m (QueringBalance m res) '[BalanceAvailable m res]
   termSession :: TermDef m (SessionIdle m res)
 
-  _accountBalance :: BalanceAvailable m res -> m Funds
+  _accountBalance :: BalanceAvailable m res -> Funds
   
 
 --  
 buildRes ''Account
 
 accountBalance :: forall res m name. (Account m res) => StBalanceAvailable m res name -> m Funds
-accountBalance (St st) = _accountBalance st
+accountBalance (St st) = Protolude.return $ _accountBalance st
+
+instance Account m res => Property  (StBalanceAvailable m res name) BalanceProp where
+  getProp (St st) _px = _accountBalance st
 
 type IsUserLoggedIn name 
   = Not 
