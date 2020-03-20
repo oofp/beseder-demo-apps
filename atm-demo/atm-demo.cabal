@@ -27,6 +27,7 @@ library
                      , Beseder.Atm.Resources.UIImpl.CashDispenserUI
                      , Beseder.Atm.Resources.UIImpl.CardReaderUI
                      , Beseder.Atm.AtmAppProp
+                     , Beseder.Atm.AtmAppInit
   build-depends:       base >= 4.7 && < 5
                      , protolude
                      , beseder

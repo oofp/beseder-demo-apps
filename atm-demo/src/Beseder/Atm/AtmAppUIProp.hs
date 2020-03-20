@@ -38,6 +38,7 @@ import           Beseder.Atm.AtmAppProp
 import           SDUI.Data.SDUIData
 import           Beseder.SDUI.SDUIResImpl
 import           GHC.Exts (Any)    
+import           Beseder.Atm.AtmAppInit
 
 type IdleStateUI = IdleState TaskQ UICashDisp UICardReader UITerm
 
@@ -59,12 +60,15 @@ initATMUiApp ctx = do
   newRes #card (cardRes ctx)
   newRes #term (termRes ctx)
 
+initATMUiApp' :: SDUIContext -> STransData TaskQ NoSplitter _ ()
+initATMUiApp' ctx = initATMApp (dispRes ctx) (cardRes ctx) (termRes ctx)
+
 atmTaskQApp :: AccountRes.ResPar TaskQ UIAccount -> STransData TaskQ NoSplitter _ ()
 atmTaskQApp accountRes = atmAppAsrtData accountRes   
 
 atmUIApp :: SDUIContext -> STransData TaskQ NoSplitter _ ()
 atmUIApp ctx = do
-  initATMUiApp ctx
+  initATMUiApp' ctx
   while (atmTaskQApp (accRes ctx) >> return True) 
   clear #card
   clear #dsp
